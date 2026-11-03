@@ -137,7 +137,7 @@ with col1:
     code_input = st.text_area(
         "Enter source code:", 
         height=400, 
-        placeholder="Paste your C++, Python, or Java code here...",
+       placeholder="Drop your complex source code here to unlock its human intuition... 🚀",
         label_visibility="collapsed",
         key=f"input_{st.session_state.reset_count}"
     )
