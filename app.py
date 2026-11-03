@@ -21,13 +21,13 @@ def reset_app():
 # --- 3. PROFESSIONAL DASHBOARD CSS ---
 st.markdown("""
     <style>
-        /* Hide the Streamlit Header (the top white band) */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap');
+
+     /* Hide the Streamlit Header (the top white band) */
     header {visibility: hidden;}
     
     /* Hide the Streamlit Footer (the 'Made with Streamlit' text) */
     footer {visibility: hidden;}
-
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap');
 
     /* Global Font and Background */
     html, body, [class*="css"] {
