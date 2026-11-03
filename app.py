@@ -83,7 +83,7 @@ if submit_button:
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": f"Explain this code: \n\n{code_input}"},
                     ],
-                    model="llama3-8b-8192",
+                    model="openai/gpt-oss-120b",
                     temperature=0.7,
                 )
 
