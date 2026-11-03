@@ -21,7 +21,6 @@ st.markdown("""
         background-color: #f8fafc;
     }
 
-    /* Title Styling */
     .main-title {
         font-size: 42px;
         font-weight: 800;
@@ -37,7 +36,6 @@ st.markdown("""
         margin-bottom: 40px;
     }
 
-    /* Card Styling for the Result */
     .result-card {
         background-color: white;
         padding: 30px;
@@ -51,12 +49,11 @@ st.markdown("""
         color: #3b82f6;
         font-weight: 600;
         font-size: 20px;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
         display: flex;
         align-items: center;
     }
 
-    /* Code input styling */
     .stTextArea textarea {
         font-family: 'Fira Code', monospace !important;
         background-color: #1e293b !important;
@@ -64,7 +61,6 @@ st.markdown("""
         border-radius: 10px !important;
     }
     
-    /* Button styling */
     .stButton>button {
         width: 100%;
         border-radius: 8px;
@@ -73,18 +69,13 @@ st.markdown("""
         color: white !important;
         font-weight: 600 !important;
         border: none !important;
-        transition: all 0.3s ease;
-    }
-    .stButton>button:hover {
-        background-color: #2563eb !important;
-        transform: translateY(-2px);
     }
     </style>
     """, unsafe_allow_html=True)
 
 # --- UI HEADER ---
 st.markdown('<div class="main-title">🚀 CodeAnalogy Pro</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">Bridging the gap between complex syntax and human intuition.</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-title">Turning scary code into simple, everyday stories.</div>', unsafe_allow_html=True)
 
 # --- SIDEBAR SETTINGS ---
 with st.sidebar:
@@ -93,75 +84,74 @@ with st.sidebar:
     
     if "GROQ_API_KEY" in st.secrets:
         api_key = st.secrets["GROQ_API_KEY"]
-        st.success("API Key loaded from Secrets")
     else:
         api_key = st.text_input("Groq API Key", type="password")
     
     st.divider()
-    
-    st.subheader("⚙️ Translation Settings")
+    st.subheader("⚙️ Simplicity Settings")
     style = st.select_slider(
-        "Analogy Complexity",
-        options=["ELI5 (Child)", "Beginner", "Professional", "Philosophical"]
+        "Who is this for?",
+        options=["A Child", "A Student", "A Non-Tech Adult", "A Manager"]
     )
     
-    temperature = st.slider("Creativity Level", 0.0, 1.0, 0.7)
+    temperature = st.slider("Creativity", 0.0, 1.0, 0.6)
 
 # --- MAIN INTERFACE ---
 col1, col2 = st.columns([1, 1], gap="large")
 
 with col1:
-    st.markdown("### 💻 Input Source")
+    st.markdown("### 💻 Paste Your Code")
     code_input = st.text_area(
-        "Paste your source code here:", 
+        "Enter source code:", 
         height=400, 
-        placeholder="Paste C++, Python, Java, or Javascript code...",
+        placeholder="Paste C++, Python, etc...",
         label_visibility="collapsed"
     )
-    submit_button = st.button("Generate Intuition ✨")
+    submit_button = st.button("Simplify Logic ✨")
 
 with col2:
-    st.markdown("### 🌟 Human Interpretation")
+    st.markdown("### 🌟 Simple Interpretation")
     
     if submit_button:
         if not api_key:
             st.error("Please provide an API key in the sidebar.")
         elif not code_input:
-            st.warning("The input area is empty. Please provide code.")
+            st.warning("Please paste some code first.")
         else:
-            with st.spinner("⚙️ Decoding logic and crafting analogy..."):
+            with st.spinner("⚙️ Translating to simple words..."):
                 try:
                     client = Groq(api_key=api_key)
                     
-                    # IMPROVED PROFESSIONAL SYSTEM PROMPT
+                    # NEW & IMPROVED SYSTEM PROMPT: Focused on simplicity
                     system_prompt = (
-                        f"You are an elite technical communicator. Your goal is to translate code into a high-quality analogy. "
-                        f"Current Complexity Level: {style}. "
-                        "Structure your response exactly as follows:\n\n"
-                        "1. **The Analogy**: Create a vivid, real-world scenario that mirrors the code's logic. "
-                        "Avoid clichés. Be creative and precise.\n"
-                        "2. **The Mapping**: Explain exactly which part of the analogy represents which part of the code. "
-                        "(e.g., 'The Warehouse = The Array').\n"
-                        "3. **The Core Intuition**: One sentence that captures the 'Why' behind this logic.\n\n"
-                        "Constraints: Do not use technical jargon in the Analogy section. Use professional, polished language."
+                        f"You are an expert at making hard things simple. Your goal is to explain code to {style}. "
+                        "STRICT RULES FOR VOCABULARY:\n"
+                        "1. Use ONLY plain, everyday English. Avoid big words.\n"
+                        "2. NO technical jargon. Instead of 'iterate', say 'go through'. Instead of 'allocate', say 'set aside'.\n"
+                        "3. Use a vivid, real-world analogy (like using a kitchen, a library, or a grocery store).\n"
+                        "4. Keep sentences short and clear.\n\n"
+                        "STRUCTURE YOUR RESPONSE AS:\n"
+                        "- **The Story**: A simple 2-3 sentence analogy.\n"
+                        "- **How it matches**: A simple list (e.g., 'The Box = The Variable').\n"
+                        "- **The Main Idea**: One simple sentence explaining the goal of the code."
                     )
 
                     completion = client.chat.completions.create(
                         messages=[
                             {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": f"Translate this code into a professional analogy:\n\n{code_input}"},
+                            {"role": "user", "content": f"Explain this code in very simple words:\n\n{code_input}"},
                         ],
-                        model="openai/gpt-oss-120b", # Using the larger 70b model for much better quality
+                        model="openai/gpt-oss-120b", 
                         temperature=temperature,
                     )
 
                     result = completion.choices[0].message.content
                     
-                    # Displaying the result in a professional card
+                    # Display the result in the professional card
                     st.markdown(f"""
                         <div class="result-card">
-                            <div class="analogy-header">✨ Interpretation Complete</div>
-                            <div style="color: #334155; line-height: 1.6;">
+                            <div class="analogy-header">✨ Simple Explanation</div>
+                            <div style="color: #334155; line-height: 1.6; font-size: 17px;">
                                 {result.replace('\n', '<br>')}
                             </div>
                         </div>
@@ -170,8 +160,7 @@ with col2:
                 except Exception as e:
                     st.error(f"Error: {e}")
     else:
-        st.info("Your translation will appear here once you click 'Generate Intuition'.")
+        st.info("Paste your code on the left and click 'Simplify Logic' to see the magic.")
 
-# --- FOOTER ---
 st.markdown("<br><br>", unsafe_allow_html=True)
-st.markdown('<div style="text-align: center; color: #94a3b8; font-size: 12px;">Powered by Groq Llama3-70B & Streamlit Pro UI</div>', unsafe_allow_html=True)
+st.markdown('<div style="text-align: center; color: #94a3b8; font-size: 12px;">Professional UI • Simple Language • Powered by Groq</div>', unsafe_allow_html=True)
