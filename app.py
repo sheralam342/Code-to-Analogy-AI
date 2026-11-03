@@ -5,7 +5,7 @@ from groq import Groq
 st.set_page_config(
     page_title="CodeAnalogy Pro", 
     page_icon="🚀", 
-    layout="wide"
+    layout="wide" # Keeps the wide capability, but we will center the content via CSS
 )
 
 # --- 2. SESSION STATE INITIALIZATION ---
@@ -18,79 +18,103 @@ def reset_app():
     st.session_state.result = None
     st.session_state.reset_count += 1
 
-# --- 3. PROFESSIONAL MODERN CSS ---
+# --- 3. PROFESSIONAL DASHBOARD CSS ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap');
 
+    /* Global Font and Background */
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
     }
-    .main {
-        background-color: #f8fafc;
+    .stApp {
+        background-color: #f1f5f9;
     }
+
+    /* Centering the entire app content to prevent "too stretched" look */
+    .block-container {
+        max-width: 1200px; 
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+
+    /* Header Styling */
     .main-title {
-        font-size: 42px;
+        font-size: 48px;
         font-weight: 800;
-        color: #1e293b;
+        color: #0f172a;
         text-align: center;
-        margin-bottom: 10px;
+        margin-bottom: 0px;
+        letter-spacing: -1px;
     }
     .sub-title {
-        font-size: 18px;
+        font-size: 20px;
         color: #64748b;
         text-align: center;
         margin-bottom: 40px;
     }
+
+    /* Result Card Styling */
     .result-card {
         background-color: white;
-        padding: 30px;
-        border-radius: 15px;
+        padding: 35px;
+        border-radius: 20px;
         border: 1px solid #e2e8f0;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        margin-top: 20px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+        margin-top: 10px;
+        min-height: 400px; /* Matches the input box height for balance */
     }
     .analogy-header {
         color: #3b82f6;
-        font-weight: 600;
-        font-size: 20px;
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
+        font-weight: 700;
+        font-size: 22px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #eff6ff;
+        padding-bottom: 10px;
     }
+
+    /* Code Input Area */
     .stTextArea textarea {
         font-family: 'Fira Code', monospace !important;
-        background-color: #1e293b !important;
-        color: #f8fafc !important;
-        border-radius: 10px !important;
+        background-color: #0f172a !important;
+        color: #e2e8f0 !important;
+        border-radius: 15px !important;
+        border: none !important;
     }
+    
+    /* Buttons */
     .stButton>button {
         width: 100%;
-        border-radius: 8px;
-        height: 3em;
+        border-radius: 12px;
+        height: 3.5em;
         font-weight: 600 !important;
-        border: none !important;
+        font-size: 16px !important;
+        transition: all 0.2s ease;
     }
     div.stButton > button:first-child {
         background-color: #3b82f6 !important;
         color: white !important;
+        box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+    }
+    div.stButton > button:first-child:hover {
+        background-color: #2563eb !important;
+        transform: translateY(-2px);
     }
     .reset-btn-container {
-        margin-top: 20px;
+        margin-top: 25px;
     }
     </style>
     """, unsafe_allow_html=True)
 
 # --- 4. UI HEADER ---
 st.markdown('<div class="main-title">🚀 CodeAnalogy Pro</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">Turning scary code into simple, everyday stories.</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-title">Translating complex syntax into human intuition.</div>', unsafe_allow_html=True)
 
 # --- 5. SIDEBAR SETTINGS ---
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/2103/2103633.png", width=80)
     st.title("Control Panel")
     
-    # API Key handling
     if "GROQ_API_KEY" in st.secrets:
         api_key = st.secrets["GROQ_API_KEY"]
     else:
@@ -105,17 +129,15 @@ with st.sidebar:
     temperature = st.slider("Creativity", 0.0, 1.0, 0.6)
 
 # --- 6. MAIN LAYOUT ---
-# We define columns here. These MUST be at the top level of the main area.
 col1, col2 = st.columns([1, 1], gap="large")
 
 # --- LEFT COLUMN: INPUT ---
 with col1:
-    st.markdown("### 💻 Paste Your Code")
-    # We use the reset_count in the key to force clear the box on reset
+    st.markdown("### 💻 Source Code")
     code_input = st.text_area(
         "Enter source code:", 
         height=400, 
-        placeholder="Paste C++, Python, etc...",
+        placeholder="Paste your C++, Python, or Java code here...",
         label_visibility="collapsed",
         key=f"input_{st.session_state.reset_count}"
     )
@@ -126,7 +148,7 @@ with col1:
         elif not code_input:
             st.warning("Please paste some code first.")
         else:
-            with st.spinner("⚙️ Translating to simple words..."):
+            with st.spinner("⚙️ Crafting your analogy..."):
                 try:
                     client = Groq(api_key=api_key)
                     system_prompt = (
@@ -151,35 +173,39 @@ with col1:
                         temperature=temperature,
                     )
                     st.session_state.result = completion.choices[0].message.content
-                    st.rerun() # Rerun to instantly show result in col2
+                    st.rerun()
                     
                 except Exception as e:
                     st.error(f"Error: {e}")
 
 # --- RIGHT COLUMN: OUTPUT ---
 with col2:
-    st.markdown("### 🌟 Simple Interpretation")
+    st.markdown("### 🌟 Interpretation")
     
     if st.session_state.result:
-        # Result Card
+        # Result Card with fixed min-height for visual balance
         st.markdown(f"""
             <div class="result-card">
                 <div class="analogy-header">✨ Simple Explanation</div>
-                <div style="color: #334155; line-height: 1.6; font-size: 17px;">
+                <div style="color: #334155; line-height: 1.8; font-size: 18px;">
                     {st.session_state.result.replace('\n', '<br>')}
                 </div>
             </div>
         """, unsafe_allow_html=True)
         
-        # Reset Button
         st.markdown('<div class="reset-btn-container">', unsafe_allow_html=True)
         if st.button("🗑️ Clear and Start New"):
             reset_app()
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
     else:
-        st.info("Paste your code on the left and click 'Simplify Logic' to see the magic.")
+        # Placeholder that matches the height of the input box
+        st.markdown("""
+            <div class="result-card" style="display: flex; align-items: center; justify-content: center; text-align: center; color: #94a3b8; font-style: italic;">
+                Your simplified interpretation will appear here.
+            </div>
+        """, unsafe_allow_html=True)
 
 # --- FOOTER ---
 st.markdown("<br><br>", unsafe_allow_html=True)
-st.markdown('<div style="text-align: center; color: #94a3b8; font-size: 12px;">Professional UI • Simple Language • Powered by Groq</div>', unsafe_allow_html=True)
+st.markdown('<div style="text-align: center; color: #94a3b8; font-size: 13px;">Professional UI • Human-Centric Design • Powered by Groq Llama3</div>', unsafe_allow_html=True)
