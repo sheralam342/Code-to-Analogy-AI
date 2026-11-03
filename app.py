@@ -1,26 +1,24 @@
 import streamlit as st
 from groq import Groq
 
-# --- PAGE CONFIGURATION ---
+# --- 1. PAGE CONFIGURATION ---
 st.set_page_config(
     page_title="CodeAnalogy Pro", 
     page_icon="🚀", 
     layout="wide"
 )
 
-# --- SESSION STATE INITIALIZATION ---
-# We use a 'reset_count' to force widgets to clear
+# --- 2. SESSION STATE INITIALIZATION ---
 if "reset_count" not in st.session_state:
     st.session_state.reset_count = 0
 if "result" not in st.session_state:
     st.session_state.result = None
 
-# Function to reset the app
 def reset_app():
     st.session_state.result = None
-    st.session_state.reset_count += 1  # Incrementing this wipes the text area
+    st.session_state.reset_count += 1
 
-# --- PROFESSIONAL MODERN CSS ---
+# --- 3. PROFESSIONAL MODERN CSS ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap');
@@ -28,11 +26,9 @@ st.markdown("""
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
     }
-
     .main {
         background-color: #f8fafc;
     }
-
     .main-title {
         font-size: 42px;
         font-weight: 800;
@@ -40,14 +36,12 @@ st.markdown("""
         text-align: center;
         margin-bottom: 10px;
     }
-    
     .sub-title {
         font-size: 18px;
         color: #64748b;
         text-align: center;
         margin-bottom: 40px;
     }
-
     .result-card {
         background-color: white;
         padding: 30px;
@@ -56,7 +50,6 @@ st.markdown("""
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         margin-top: 20px;
     }
-
     .analogy-header {
         color: #3b82f6;
         font-weight: 600;
@@ -65,14 +58,12 @@ st.markdown("""
         display: flex;
         align-items: center;
     }
-
     .stTextArea textarea {
         font-family: 'Fira Code', monospace !important;
         background-color: #1e293b !important;
         color: #f8fafc !important;
         border-radius: 10px !important;
     }
-    
     .stButton>button {
         width: 100%;
         border-radius: 8px;
@@ -80,33 +71,26 @@ st.markdown("""
         font-weight: 600 !important;
         border: none !important;
     }
-
     div.stButton > button:first-child {
         background-color: #3b82f6 !important;
         color: white !important;
     }
-
     .reset-btn-container {
         margin-top: 20px;
-    }
-    
-    /* Styling the reset button specifically */
-    .stButton > button[kind="secondary"] {
-        background-color: #ef4444 !important;
-        color: white !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- UI HEADER ---
+# --- 4. UI HEADER ---
 st.markdown('<div class="main-title">🚀 CodeAnalogy Pro</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Turning scary code into simple, everyday stories.</div>', unsafe_allow_html=True)
 
-# --- SIDEBAR SETTINGS ---
+# --- 5. SIDEBAR SETTINGS ---
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/2103/2103633.png", width=80)
     st.title("Control Panel")
     
+    # API Key handling
     if "GROQ_API_KEY" in st.secrets:
         api_key = st.secrets["GROQ_API_KEY"]
     else:
@@ -120,18 +104,20 @@ with st.sidebar:
     )
     temperature = st.slider("Creativity", 0.0, 1.0, 0.6)
 
-# --- MAIN INTERFACE ---
+# --- 6. MAIN LAYOUT ---
+# We define columns here. These MUST be at the top level of the main area.
 col1, col2 = st.columns([1, 1], gap="large")
 
+# --- LEFT COLUMN: INPUT ---
 with col1:
     st.markdown("### 💻 Paste Your Code")
-    # KEY ROTATION: The key changes every time reset_app() is called
+    # We use the reset_count in the key to force clear the box on reset
     code_input = st.text_area(
         "Enter source code:", 
         height=400, 
         placeholder="Paste C++, Python, etc...",
         label_visibility="collapsed",
-        key=f"code_input_{st.session_state.reset_count}" 
+        key=f"input_{st.session_state.reset_count}"
     )
     
     if st.button("Simplify Logic ✨"):
@@ -161,12 +147,39 @@ with col1:
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": f"Explain this code in very simple words:\n\n{code_input}"},
                         ],
-                        model="openai/gpt-oss-120b", 
+                        model="llama3-70b-8192", 
                         temperature=temperature,
                     )
                     st.session_state.result = completion.choices[0].message.content
+                    st.rerun() # Rerun to instantly show result in col2
                     
                 except Exception as e:
                     st.error(f"Error: {e}")
 
-with col2:*_
+# --- RIGHT COLUMN: OUTPUT ---
+with col2:
+    st.markdown("### 🌟 Simple Interpretation")
+    
+    if st.session_state.result:
+        # Result Card
+        st.markdown(f"""
+            <div class="result-card">
+                <div class="analogy-header">✨ Simple Explanation</div>
+                <div style="color: #334155; line-height: 1.6; font-size: 17px;">
+                    {st.session_state.result.replace('\n', '<br>')}
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        # Reset Button
+        st.markdown('<div class="reset-btn-container">', unsafe_allow_html=True)
+        if st.button("🗑️ Clear and Start New"):
+            reset_app()
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        st.info("Paste your code on the left and click 'Simplify Logic' to see the magic.")
+
+# --- FOOTER ---
+st.markdown("<br><br>", unsafe_allow_html=True)
+st.markdown('<div style="text-align: center; color: #94a3b8; font-size: 12px;">Professional UI • Simple Language • Powered by Groq</div>', unsafe_allow_html=True)
