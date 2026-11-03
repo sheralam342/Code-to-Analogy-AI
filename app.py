@@ -9,16 +9,16 @@ st.set_page_config(
 )
 
 # --- SESSION STATE INITIALIZATION ---
-# This allows us to store the result and the input so we can clear them
+# We use a 'reset_count' to force widgets to clear
+if "reset_count" not in st.session_state:
+    st.session_state.reset_count = 0
 if "result" not in st.session_state:
     st.session_state.result = None
-if "code_input" not in st.session_state:
-    st.session_state.code_input = ""
 
 # Function to reset the app
 def reset_app():
     st.session_state.result = None
-    st.session_state.code_input = ""
+    st.session_state.reset_count += 1  # Incrementing this wipes the text area
 
 # --- PROFESSIONAL MODERN CSS ---
 st.markdown("""
@@ -81,15 +81,18 @@ st.markdown("""
         border: none !important;
     }
 
-    /* Primary Button Color */
     div.stButton > button:first-child {
         background-color: #3b82f6 !important;
         color: white !important;
     }
 
-    /* Reset Button Style (Secondary) */
-    .reset-btn > div > button {
-        background-color: #ef4444 !important; /* Red color */
+    .reset-btn-container {
+        margin-top: 20px;
+    }
+    
+    /* Styling the reset button specifically */
+    .stButton > button[kind="secondary"] {
+        background-color: #ef4444 !important;
         color: white !important;
     }
     </style>
@@ -122,16 +125,15 @@ col1, col2 = st.columns([1, 1], gap="large")
 
 with col1:
     st.markdown("### 💻 Paste Your Code")
-    # We use 'key' here to link the text area to session_state
+    # KEY ROTATION: The key changes every time reset_app() is called
     code_input = st.text_area(
         "Enter source code:", 
         height=400, 
         placeholder="Paste C++, Python, etc...",
         label_visibility="collapsed",
-        key="code_input" 
+        key=f"code_input_{st.session_state.reset_count}" 
     )
     
-    # Generate Button
     if st.button("Simplify Logic ✨"):
         if not api_key:
             st.error("Please provide an API key in the sidebar.")
@@ -162,36 +164,9 @@ with col1:
                         model="openai/gpt-oss-120b", 
                         temperature=temperature,
                     )
-                    # Save the result into session state so it stays on screen
                     st.session_state.result = completion.choices[0].message.content
                     
                 except Exception as e:
                     st.error(f"Error: {e}")
 
-with col2:
-    st.markdown("### 🌟 Simple Interpretation")
-    
-    if st.session_state.result:
-        # Display the professional result card
-        st.markdown(f"""
-            <div class="result-card">
-                <div class="analogy-header">✨ Simple Explanation</div>
-                <div style="color: #334155; line-height: 1.6; font-size: 17px;">
-                    {st.session_state.result.replace('\n', '<br>')}
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        # --- THE RESET BUTTON ---
-        # This button only appears if there is a result
-        st.markdown('<div class="reset-btn">', unsafe_allow_html=True)
-        if st.button("🗑️ Clear and Start New"):
-            reset_app()
-            st.rerun() # Refresh the page to clear everything
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-    else:
-        st.info("Paste your code on the left and click 'Simplify Logic' to see the magic.")
-
-st.markdown("<br><br>", unsafe_allow_html=True)
-st.markdown('<div style="text-align: center; color: #94a3b8; font-size: 12px;">Professional UI • Simple Language • Powered by Groq</div>', unsafe_allow_html=True)
+with col2:*_
