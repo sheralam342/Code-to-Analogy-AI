@@ -8,6 +8,18 @@ st.set_page_config(
     layout="wide"
 )
 
+# --- SESSION STATE INITIALIZATION ---
+# This allows us to store the result and the input so we can clear them
+if "result" not in st.session_state:
+    st.session_state.result = None
+if "code_input" not in st.session_state:
+    st.session_state.code_input = ""
+
+# Function to reset the app
+def reset_app():
+    st.session_state.result = None
+    st.session_state.code_input = ""
+
 # --- PROFESSIONAL MODERN CSS ---
 st.markdown("""
     <style>
@@ -65,10 +77,20 @@ st.markdown("""
         width: 100%;
         border-radius: 8px;
         height: 3em;
-        background-color: #3b82f6 !important;
-        color: white !important;
         font-weight: 600 !important;
         border: none !important;
+    }
+
+    /* Primary Button Color */
+    div.stButton > button:first-child {
+        background-color: #3b82f6 !important;
+        color: white !important;
+    }
+
+    /* Reset Button Style (Secondary) */
+    .reset-btn > div > button {
+        background-color: #ef4444 !important; /* Red color */
+        color: white !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -93,7 +115,6 @@ with st.sidebar:
         "Who is this for?",
         options=["A Child", "A Student", "A Non-Tech Adult", "A Manager"]
     )
-    
     temperature = st.slider("Creativity", 0.0, 1.0, 0.6)
 
 # --- MAIN INTERFACE ---
@@ -101,18 +122,17 @@ col1, col2 = st.columns([1, 1], gap="large")
 
 with col1:
     st.markdown("### 💻 Paste Your Code")
+    # We use 'key' here to link the text area to session_state
     code_input = st.text_area(
         "Enter source code:", 
         height=400, 
         placeholder="Paste C++, Python, etc...",
-        label_visibility="collapsed"
+        label_visibility="collapsed",
+        key="code_input" 
     )
-    submit_button = st.button("Simplify Logic ✨")
-
-with col2:
-    st.markdown("### 🌟 Simple Interpretation")
     
-    if submit_button:
+    # Generate Button
+    if st.button("Simplify Logic ✨"):
         if not api_key:
             st.error("Please provide an API key in the sidebar.")
         elif not code_input:
@@ -121,19 +141,17 @@ with col2:
             with st.spinner("⚙️ Translating to simple words..."):
                 try:
                     client = Groq(api_key=api_key)
-                    
-                    # NEW & IMPROVED SYSTEM PROMPT: Focused on simplicity
                     system_prompt = (
                         f"You are an expert at making hard things simple. Your goal is to explain code to {style}. "
                         "STRICT RULES FOR VOCABULARY:\n"
                         "1. Use ONLY plain, everyday English. Avoid big words.\n"
-                        "2. NO technical jargon. Instead of 'iterate', say 'go through'. Instead of 'allocate', say 'set aside'.\n"
-                        "3. Use a vivid, real-world analogy (like using a kitchen, a library, or a grocery store).\n"
+                        "2. NO technical jargon. Instead of 'iterate', say 'go through'.\n"
+                        "3. Use a vivid, real-world analogy.\n"
                         "4. Keep sentences short and clear.\n\n"
                         "STRUCTURE YOUR RESPONSE AS:\n"
                         "- **The Story**: A simple 2-3 sentence analogy.\n"
-                        "- **How it matches**: A simple list (e.g., 'The Box = The Variable').\n"
-                        "- **The Main Idea**: One simple sentence explaining the goal of the code."
+                        "- **How it matches**: A simple list.\n"
+                        "- **The Main Idea**: One simple sentence."
                     )
 
                     completion = client.chat.completions.create(
@@ -144,21 +162,34 @@ with col2:
                         model="openai/gpt-oss-120b", 
                         temperature=temperature,
                     )
-
-                    result = completion.choices[0].message.content
-                    
-                    # Display the result in the professional card
-                    st.markdown(f"""
-                        <div class="result-card">
-                            <div class="analogy-header">✨ Simple Explanation</div>
-                            <div style="color: #334155; line-height: 1.6; font-size: 17px;">
-                                {result.replace('\n', '<br>')}
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
+                    # Save the result into session state so it stays on screen
+                    st.session_state.result = completion.choices[0].message.content
                     
                 except Exception as e:
                     st.error(f"Error: {e}")
+
+with col2:
+    st.markdown("### 🌟 Simple Interpretation")
+    
+    if st.session_state.result:
+        # Display the professional result card
+        st.markdown(f"""
+            <div class="result-card">
+                <div class="analogy-header">✨ Simple Explanation</div>
+                <div style="color: #334155; line-height: 1.6; font-size: 17px;">
+                    {st.session_state.result.replace('\n', '<br>')}
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        # --- THE RESET BUTTON ---
+        # This button only appears if there is a result
+        st.markdown('<div class="reset-btn">', unsafe_allow_html=True)
+        if st.button("🗑️ Clear and Start New"):
+            reset_app()
+            st.rerun() # Refresh the page to clear everything
+        st.markdown('</div>', unsafe_allow_html=True)
+        
     else:
         st.info("Paste your code on the left and click 'Simplify Logic' to see the magic.")
 
