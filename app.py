@@ -147,7 +147,7 @@ with col1:
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": f"Explain this code in very simple words:\n\n{code_input}"},
                         ],
-                        model="llama3-70b-8192", 
+                        model="openai/gpt-oss-120b", 
                         temperature=temperature,
                     )
                     st.session_state.result = completion.choices[0].message.content
