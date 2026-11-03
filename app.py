@@ -31,6 +31,13 @@ st.markdown("""
         background-color: #f1f5f9;
     }
 
+        /* This targets the placeholder text specifically */
+    .stTextArea textarea::placeholder {
+        color: white !important;
+        opacity: 0.7 !important; /* Makes it slightly transparent so it looks like a real placeholder */
+    }
+
+
     /* Centering the entire app content to prevent "too stretched" look */
     .block-container {
         max-width: 1200px; 
